@@ -264,26 +264,19 @@ def laban_feature_pop(row, movement, FEATURES):
     features.append(distance(hd, hp))
 
     ## Hand Level
-    cu = 0
-    cm = 0
-    cl = 0
+    hll = 0
+    hlr = 0
     if lh[2] >= hd[2]:
-        cu = 1
+        hll = 2
     elif lh[2] >= hp[2]:
-        cm = 1
-    else:
-        cl = 1
+        hll = 1
 
     if rh[2] >= hd[2]:
-        cu = cu + 1
+        hlr = 2
     elif rh[2] >= hp[2]:
-        cm = cm + 1
-    else:
-        cl = cl + 1
+        hlr = 1
 
-    features.append(cu)
-    features.append(cm)
-    features.append(cl)
+    features.append((hll + hlr) / 2)
 
     # Total Distance -- "total_dist"
     rt_d = movement["root"].get_d()
@@ -302,7 +295,7 @@ def featureFrames(labal_features, frame_size):
         rframe = np.array(labal_features[index : (index + frame_size)])
         for j in range(len(labal_features[index])):
             frame = rframe[:, j]
-            if j in [11, 26, 27, 28, 29, 30]:
+            if j in [11, 26, 27, 28]:
                 fframe.append(frame.sum())
             elif j in [15, 16, 17, 18]:
                 # MAX
@@ -388,10 +381,10 @@ def read_in_dancer(path_in, FEATURES):
     return dancer_data
 
 
-def read_in_labels(labels_path):
+def read_in_labels(labels_path, dance_len):
     timestamp = 0
     count = 0
-    dt = 0.04
+    temp = []
     labels = []
     with open(labels_path, "r") as inp:
         labels.append(["timestamp", "label"])
@@ -399,11 +392,18 @@ def read_in_labels(labels_path):
             if count == 0:
                 count = 1
             else:
-                endT = (int(row[2]) * 150) - 1
-                startT = int(row[1]) * 150
-                for timestamp in range(startT, endT):
-                    ts = float(timestamp) / 150
-                    labels.append([ts, int(row[0])])
+                temp.append(row)
+    total_time = int(temp[-1][2])
+    print("total time: ", total_time)
+    fps = int(dance_len / total_time)
+    print("frames per second: ", fps)
+
+    for row in temp:
+        endT = (int(row[2]) * fps) - 1
+        startT = int(row[1]) * fps
+        for timestamp in range(startT, endT):
+            ts = float(timestamp) / fps
+            labels.append([ts, int(row[0])])
     return labels
 
 

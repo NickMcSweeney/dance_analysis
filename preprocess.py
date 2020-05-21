@@ -53,32 +53,39 @@ LABAN_FEATURES = [
     "vol_l",
     "vol_r",
     "torso_height",
-    "hands_level_upper",
-    "hands_level_mid",
-    "hands_level_low",
+    "hands_level",
     "total_dist",
     "total_area",
 ]
 
+dance_len = 0
 
-labels = read_in_labels(labels_path)
+print("read in valeria features")
 f1 = read_in_features(valeria_path)
+print("read in valeria data")
 l1 = read_in_dancer(valeria_path, f1)
+dance_len = len(l1)
+print("create valeria data frames")
 l1 = featureFrames(l1, 175)
 
+print("read in andrii features")
 f2 = read_in_features(andrii_path)
+print("read in andrii data")
 l2 = read_in_dancer(andrii_path, f2)
+print("create andrii data frames")
 l2 = featureFrames(l2, 175)
 
+print("read in labels")
+labels = read_in_labels(labels_path, dance_len)
+
+print("updating the label objects")
 for index in range(len(l1)):
     laban_elems.append(labels[index])
     if index == 0:
         for feature in LABAN_FEATURES:
             if feature in [
                 "decel_peaks",
-                "hands_level_upper",
-                "hands_level_mid",
-                "hands_level_low",
+                "hands_level",
                 "total_dist",
                 "total_area",
             ]:
@@ -106,6 +113,14 @@ for index in range(len(l1)):
                 laban_elems[index].append("V_" + feature + "_std")
                 laban_elems[index].append("A_" + feature + "_std")
 
+    elif index == 1:
+        print("exising row --> ", laban_elems[index])
+        for j in range(len(l1[index])):
+            print("j is --> ", j)
+            laban_elems[index].append(l1[index][j])
+            print("l1 is --> ", l1[index][j])
+            laban_elems[index].append(l2[index][j])
+            print("l2 is --> ", l2[index][j])
     else:
         for j in range(len(l1[index])):
             laban_elems[index].append(l1[index][j])
@@ -114,4 +129,5 @@ for index in range(len(l1)):
 with open(data_path, "w") as out:
     writer = csv.writer(out)
     for index, elem in enumerate(laban_elems):
-        writer.writerow(labels[index] + elem)
+        row = labels[index] + elem
+        writer.writerow(row)

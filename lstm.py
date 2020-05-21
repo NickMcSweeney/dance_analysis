@@ -53,80 +53,62 @@ print(labels.head())
 
 dataset = features.values
 
-DATA_LEN = int(len(dataset))
-DATA_STEP = int(DATA_LEN / 5)
-print("training split: ", DATA_STEP)
-
 data_mean = dataset.mean(axis=0)
 data_std = dataset.std(axis=0)
 
 dataset = (dataset - data_mean) / data_std
-labelset = labels.values
+# labelset = labels.values
+l = []
+for val in labels.values:
+    row = np.zeros(13)
+    row[val] = 1
+    l.append(row)
+labelset = l
 
-dataarray = []
-in_shape = None
-for i in range(0, DATA_LEN, DATA_STEP):
-    print("data ", i)
+X, y = multivariate_data(
+    dataset, labelset, 0, None, past_history, future_target, STEP, single_step=True,
+)
+kf = KFold(n_splits=5)
+kf.get_n_splits(X)
 
-    x_single, y_single = multivariate_data(
-        dataset,
-        labelset,
-        i,
-        DATA_STEP + 1,
-        past_history,
-        future_target,
-        STEP,
-        single_step=True,
-    )
-    if in_shape == None:
-        in_shape = x_single.shape[-2:]
-    dataarray.append((x_single, y_single))
+model_data = []
 
-print("input shape ", in_shape)
-single_step_model = tf.keras.models.Sequential()
-single_step_model.add(tf.keras.layers.LSTM(156, input_shape=in_shape))
-single_step_model.add(tf.keras.layers.Dense(13))
+for train_index, test_index in kf.split(X):
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
 
-single_step_model.compile(optimizer=tf.keras.optimizers.RMSprop(), loss="mae")
+    print("Single window of training data : {}".format(X_train[0].shape))
+    print("Single window of validation data : {}".format(X_test[0].shape))
+    print("y training example: {}".format(y_train[800]))
+
+    train_data = tf.data.Dataset.from_tensor_slices((X_train, y_train))
+    train_data = train_data.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
+
+    test_data = tf.data.Dataset.from_tensor_slices((X_test, y_test))
+    test_data = test_data.batch(BATCH_SIZE).repeat()
+
+    model_data.append((train_data, test_data))
+
+model = tf.keras.models.Sequential()
+print("shape ", X.shape[-2:])
+model.add(tf.keras.layers.LSTM(100, input_shape=X.shape[-2:]))
+model.add(tf.keras.layers.Dense(13))
+model.compile(optimizer=tf.keras.optimizers.RMSprop(), loss="mae")
 
 EPOCHS = 10
 EVALUATION_INTERVAL = 20
 
-for i in range(5):
-    data_tupples = dataarray
-    val_data_single_tupple = data_tupples.pop(i)
-    x_train_single = []
-    y_train_single = []
-    for (x, y) in data_tupples:
-        x_train_single = x_train_single + x
-        y_train_single = y_train_single + y
-    x_val_single = val_data_single_tupple[0]
-    y_val_single = val_data_single_tupple[1]
-
-    print("Single window of training data : {}".format(x_train_single[0].shape))
-    print("Single window of validation data : {}".format(x_val_single[0].shape))
-    print("y training example: {}".format(y_train_single[800]))
-
-    train_data_single = tf.data.Dataset.from_tensor_slices(
-        (x_train_single, y_train_single)
-    )
-    train_data_single = (
-        train_data_single.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
-    )
-
-    val_data_single = tf.data.Dataset.from_tensor_slices((x_val_single, y_val_single))
-    val_data_single = val_data_single.batch(BATCH_SIZE).repeat()
-
+for (train_data, test_data) in model_data:
     # test train
-    single_step_history = single_step_model.fit(
-        train_data_single,
+    history = model.fit(
+        train_data,
         epochs=EPOCHS,
         steps_per_epoch=EVALUATION_INTERVAL,
-        validation_data=val_data_single,
+        validation_data=test_data,
         validation_steps=5,
     )
 
-    plot_train_history(single_step_history, "Single Step Training and validation loss")
+    plot_train_history(history, "Training and validation loss")
 
 
 # for x, y in val_data_single.take(1):
