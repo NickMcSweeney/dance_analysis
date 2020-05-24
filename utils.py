@@ -293,6 +293,7 @@ def featureFrames(labal_features, frame_size):
     for index in range(len(labal_features) - frame_size):
         fframe = []
         rframe = np.array(labal_features[index : (index + frame_size)])
+
         for j in range(len(labal_features[index])):
             frame = rframe[:, j]
             if j in [11, 26, 27, 28]:
@@ -302,7 +303,6 @@ def featureFrames(labal_features, frame_size):
                 fframe.append(frame.max())
                 # STD
                 fframe.append(frame.std())
-
             elif j in [12, 13, 14]:
                 # MAX
                 fframe.append(frame.max())
@@ -409,8 +409,8 @@ def read_in_labels(labels_path, dance_len):
 
 def read_in_selected_features(features_path):
     with open(features_path, "r") as inp:
-        for row in csv.reader(inp):
-            return row[2:-1]
+        reader = csv.reader(inp)
+        return next(reader)
 
 
 def create_time_steps(length):
