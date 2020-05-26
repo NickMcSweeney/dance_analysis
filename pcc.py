@@ -17,6 +17,7 @@ import csv
 from utils import *
 
 data_path = "kizomba2_formatted.csv"
+# data_path = "kizomba2_normalized.csv"
 
 
 def pccPop(datX, datY):
@@ -104,7 +105,7 @@ if __name__ == "__main__":
         corr, _ = pearsonr(l1a[:, i], l1b[:, i])
         corrs.append(abs(corr))
     corrs = np.array(corrs)
-    l1index = np.argwhere(corrs > 0.7)
+    l1index = np.argwhere(corrs > 0.4)
     # print(l1index)
     corrs = corrs[~np.isnan(corrs)]
     print("Pearsons correlation: %.3f" % corrs.mean())
@@ -114,7 +115,7 @@ if __name__ == "__main__":
         corr, _ = pearsonr(l2a[:, i], l2b[:, i])
         corrs.append(abs(corr))
     corrs = np.array(corrs)
-    l2index = np.argwhere(corrs > 0.7)
+    l2index = np.argwhere(corrs > 0.4)
     # print(l2index)
     corrs = corrs[~np.isnan(corrs)]
     print("Pearsons correlation: %.3f" % corrs.mean())
@@ -124,7 +125,7 @@ if __name__ == "__main__":
         corr, _ = pearsonr(l3a[:, i], l3b[:, i])
         corrs.append(abs(corr))
     corrs = np.array(corrs)
-    l3index = np.argwhere(corrs > 0.7)
+    l3index = np.argwhere(corrs > 0.4)
     # print(l2index)
     corrs = corrs[~np.isnan(corrs)]
     print("Pearsons correlation: %.3f" % corrs.mean())

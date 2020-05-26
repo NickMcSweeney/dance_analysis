@@ -19,9 +19,17 @@ def quat_difference(q1, q2):
 
 def quat_euler(qdat):
     [X, Y, Z, W] = qdat
-    phi = math.atan2(2 * (W * X + Y * Z), 1 - 2 * (X ** 2 + Y ** 2))
-    theta = math.asin(2 * (W * Y - X * Z))
-    psi = math.atan2(2 * (W * Z + X * Y), 1 - 2 * (Y ** 2 + Z ** 2))
+    phi = math.atan2(
+        # max(-1.0, min(1.0, (2 * (W * X + Y * Z), 1 - 2 * (X ** 2 + Y ** 2))))
+        2 * (W * X + Y * Z),
+        1 - 2 * (X ** 2 + Y ** 2),
+    )
+    theta = math.asin(max(-1.0, min(1.0, (2 * (W * Y - X * Z)))))
+    psi = math.atan2(
+        # max(-1.0, min(1.0, (2 * (W * Z + X * Y), 1 - 2 * (Y ** 2 + Z ** 2))))
+        2 * (W * Z + X * Y),
+        1 - 2 * (Y ** 2 + Z ** 2),
+    )
     return (phi, theta, psi)
 
 
@@ -89,7 +97,7 @@ class MoveState:
 def update_movement(row, elem, elem_id):
     if row[elem_id] == "":
         print(row)
-    dt = 1 / 150
+    dt = 1 / 160
     if elem == 0:
         elem = MoveState(
             (float(row[elem_id]), float(row[elem_id + 1]), float(row[elem_id + 2])),
